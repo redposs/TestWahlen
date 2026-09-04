@@ -168,7 +168,7 @@ function saeulen(title,sub,rows,opt){
       '<div class="cn">'+esc(r.n)+'</div></div>';});
   return h+'</div></div>';}
 /* ---------- Zustand ---------- */
-var CUR='start',GRP=null,TFC=null,PA=null,PB=null,SB=load('wp26_sb',true),SORT='a';
+var CUR='start',GRP=null,TFC=null,PA=null,PB=null,SB=load('wp26_sb',window.matchMedia('(max-width:900px)').matches?false:true),SORT='a';
 var FKERN=false, FPAR=[], PSUB='profil', KSORT='seiten', GRPOPEN={};
 function fKern(){FKERN=!FKERN;render();}
 function fPartei(p){var i=FPAR.indexOf(p);if(i<0)FPAR.push(p);else FPAR.splice(i,1);render();}

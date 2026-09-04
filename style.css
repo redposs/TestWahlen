@@ -43,11 +43,14 @@ header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px
 .srch input{font:inherit;font-size:13.5px;padding:7px 12px;border:1px solid var(--line);
  min-width:220px;color:var(--ink);background:var(--paper)}
 @media(max-width:900px){
- .top{padding:7px 14px;gap:14px;flex-wrap:nowrap;overflow-x:auto;height:auto;
+ .top{padding:7px 14px;gap:6px 14px;flex-wrap:wrap;height:auto}
+ .ttl{flex:0 0 100%;border-right:none;padding-right:0;font-size:13px}
+ .reiter{flex:1 1 auto;min-width:0;flex-wrap:nowrap;gap:16px;overflow-x:auto;
   scrollbar-width:none;-webkit-overflow-scrolling:touch}
- .top::-webkit-scrollbar{display:none}
- .ttl{display:none}
- .srch input{min-width:170px;width:170px}
+ .reiter::-webkit-scrollbar{display:none}
+ .srch{margin-left:0;flex:0 0 auto}
+ .srch input{min-width:120px;width:120px}
+ .syncbtn{flex:0 0 auto}
 }
 /* ============ Schale mit Seitenleiste (ein-/ausklappbar) ============ */
 .shell{margin:0;padding:0 24px 0 0;display:grid;grid-template-columns:250px minmax(0,1fr);
