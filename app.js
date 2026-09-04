@@ -5,6 +5,24 @@ var PCL={'AfD':'#1f7f97','CDU':'#4a4741','FDP':'#8f6c00','Grüne':'#37772c','Die
 var PCD={'AfD':'#4fb6cf','CDU':'#c9c3b6','FDP':'#dbb43c','Grüne':'#6fbb5f','Die Linke':'#b18ee0','SPD':'#e8736a','Volt':'#7cc3f0'};
 function dark(){return false}
 var PC=new Proxy({},{get:function(_,k){return (dark()?PCD:PCL)[k]}});
+var PSPEK=['Die Linke','Grüne','SPD','Volt','FDP','CDU','AfD'].filter(function(p){return D.parteien.indexOf(p)>=0});
+var PSORT=load('wp26_psort','az'); // 'az' oder 'spektrum'
+function parteienNachSort(){
+  if(PSORT==='spektrum')return PSPEK.slice();
+  return D.parteien.slice().sort(function(a,b){return a.localeCompare(b,'de')});}
+function setPSort(m){PSORT=m;save('wp26_psort',m);render();}
+function psortBtn(){
+  return '<div class="sortb" style="margin-left:0">Reihenfolge: '+
+    [['az','A–Z'],['spektrum','Spektrum']].map(function(x){
+      return '<button class="'+(PSORT===x[0]?'on':'')+'" onclick="setPSort(\''+x[0]+'\')"'+
+        (x[0]==='spektrum'?' title="Grobe Einordnung von links nach rechts \u2014 eigene Einschätzung, kein Anspruch auf Objektivität"':'')+
+        '>'+x[1]+'</button>'}).join('')+'</div>';}
+var BALKEN=load('wp26_balken','farbe'); // 'farbe' oder 'kontrast'
+function setBalken(m){BALKEN=m;save('wp26_balken',m);render();}
+function balkenBtn(){
+  return '<div class="sortb" style="margin:8px 0 2px">Darstellung: '+
+    [['farbe','Farben'],['kontrast','Hoher Kontrast']].map(function(x){
+      return '<button class="'+(BALKEN===x[0]?'on':'')+'" onclick="setBalken(\''+x[0]+'\')">'+x[1]+'</button>'}).join('')+'</div>';}
 var SL={K:'Klare Forderung',A:'Lehnt ab',T:'Teils dafür, teils dagegen',Z:'Absichtserklärung'};
 var SLL={K:'Klare Forderung',A:'Nur Ablehnung',T:'Teils dafür, teils dagegen',Z:'Absichtserklärung'};
 var LEGT={K:'Das Programm fordert etwas Bestimmtes. Manche dieser Antworten lehnen daneben ausdrücklich etwas ab — das steht dann in der Antwort.',
@@ -125,11 +143,13 @@ function legende(){return '<div class="leg">'+
 function chart(title,sub,rows,opt){
   opt=opt||{};
   var two=opt.two, names=opt.names||[], col=opt.col||['var(--c1)','var(--c2)'];
+  var kontrast=BALKEN==='kontrast';
+  if(kontrast)col=two?['#14161A','#5A6070']:['#14161A'];
   var eh=opt.einheit===undefined?' %':opt.einheit;
   var mx=Math.max.apply(null,rows.map(function(r){return two?Math.max(r.a,r.b):r.a}))||1;
   var nk=opt.nk===undefined?1:opt.nk;
   var h='<div class="chart"><div class="chart-h"><div><div class="chart-t">'+esc(title)+'</div>'+
-    '<div class="chart-s">'+esc(sub)+'</div></div>'+(opt.sort||'')+'</div>';
+    '<div class="chart-s">'+esc(sub)+'</div></div>'+(opt.sort||'')+'</div>'+balkenBtn();
   // Legende oben: sie erklärt die Farben, bevor man die Balken liest.
   if(two)h+='<div class="clg oben"><span><i class="csw" style="background:'+col[0]+'"></i>'+esc(names[0])+
     '</span><span><i class="csw" style="background:'+col[1]+'"></i>'+esc(names[1])+'</span></div>';
@@ -146,7 +166,7 @@ function chart(title,sub,rows,opt){
       h+='<div class="bar" title="'+esc(r.n)+' — '+de(r.a,nk)+eh+
        (r.s!=null?' (rund '+de(r.s,0)+' Seiten)':'')+'">'+
        '<div class="lbl">'+esc(r.n)+'</div><div class="track">'+
-       '<div class="fill" style="width:'+(r.a/mx*100)+'%;background:'+(r.c||col[0])+'"></div></div>'+
+       '<div class="fill" style="width:'+(r.a/mx*100)+'%;background:'+(kontrast?col[0]:(r.c||col[0]))+'"></div></div>'+
        '<div class="val">'+de(r.a,nk)+eh+'</div></div>';
     }});
   return h+'</div></div>';}
@@ -191,6 +211,7 @@ function filterleiste(n,ges,ohneParteien){
       h+='<button class="'+(FPAR.indexOf(p)>=0?'on':'')+'" onclick="fPartei(\''+p.replace(/'/g,"\\'")+'\')" '+
         'title="Antworten von '+esc(p)+' ein- oder ausblenden">'+esc(p)+'</button>';});
     h+='<button onclick="fAlle()" title="Alle Filter zurücksetzen">Alle anzeigen</button>';}
+  if(!ohneParteien)h+=psortBtn();
   var sp=sichtbareParteien().length;
   h+='<span class="fcount">'+(n===ges?ges+' Fragen':n+' von '+ges+' Fragen')+
     (!ohneParteien&&sp<P.length?' · '+sp+' von '+P.length+' Parteien':'')+'</span></div>';
@@ -276,14 +297,20 @@ function sbPartei(){
 function scrollTo2(id){var el=document.getElementById(id);
   if(el)el.scrollIntoView({block:'start',behavior:'smooth'})}
 /* ---------- Ansichten ---------- */
+function parteienListe(){
+  var a=P.slice();
+  if(a.length<2)return a.join('');
+  return a.slice(0,-1).join(', ')+' und '+a[a.length-1];}
 function vStart(){
   var M=D.meta;
   var h='<div id="s-intro" class="sp" data-sp="s-intro"></div>';
   h+='<p class="hero">Sieben Programme, '+M.seiten.toLocaleString('de-DE')+' Seiten, '+
    'eine Frage nach der anderen.</p>';
   h+='<p class="lead gross">Am 20. September 2026 wird das Berliner Abgeordnetenhaus gewählt. '+
-   'Wir haben die Wahlprogramme aller sieben Parteien ausgewertet und auf dieser Seite '+
-   'vergleichbar gemacht.</p>';
+   'Wir haben die Wahlprogramme der sieben Parteien '+esc(parteienListe())+' ausgewertet und auf '+
+   'dieser Seite vergleichbar gemacht. Diese Auswertung bezieht sich ausschließlich auf diese '+
+   'sieben Wahlprogramme — weitere antretende Parteien oder Gruppierungen sind hier nicht '+
+   'erfasst.</p>';
   h+='<p class="lead gross">Dafür sind die Programme in '+M.ut+' Fragen zerlegt, von der '+
    'Mietenbegrenzung über die Vergabe von Schulplätzen bis zur Zukunft des Tempelhofer Felds. '+
    'Zu jeder Frage steht, was jedes Programm dazu sagt — kurz zusammengefasst, mit wörtlichem '+
@@ -452,7 +479,8 @@ function sbStart(){
     return '<a href="#'+x[0]+'" class="sp-'+x[0]+'" onclick="scrollTo2(\''+x[0]+
       '\');return false">'+x[1]+'</a>'}).join('');}
 function sortiert(fragen){
-  return fragen.slice().sort(function(a,b){return (b._kern?1:0)-(a._kern?1:0)});}
+  return fragen.slice().sort(function(a,b){
+    return ((b._kern?1:0)-(a._kern?1:0))||(b._n-a._n);});}
 function vThemen(){
   var sicht=ALL.filter(passt).length;
   var h='<h2>Themen</h2><p class="lead">Links kannst du das Themenfeld wählen, alternativ durch die '+
@@ -587,7 +615,7 @@ function vPartei(){
    '</div>';
   if(PSUB==='kennz')return h+vKennz();
   h+='<p class="lead">Wähle eine Partei für ihr Profil. Wähle eine zweite dazu, '+
-   'um Kennzahlen, Schwerpunkte und Positionen zu vergleichen.</p><div class="psel">';
+   'um Kennzahlen, Schwerpunkte und Positionen zu vergleichen.</p>'+psortBtn()+'<div class="psel">';
   P.forEach(function(p){
     var on=(PA===p||PB===p);
     h+='<button class="pbtn'+(on?' on':'')+'" style="'+(on?'border-bottom-color:'+PC[p]:'')+
@@ -821,6 +849,7 @@ function offeneSetzen(s){
     var k=d.id||(d.dataset?d.dataset.g:'');if(k&&s.o[k])d.open=true});
   window.scrollTo(0,s.y);}
 function render(){
+  P=parteienNachSort();
   var vor=offeneMerken();
   var q=document.getElementById('q').value.trim();
   var main,sb=null;
