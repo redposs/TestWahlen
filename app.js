@@ -200,6 +200,8 @@ function saeulen(title,sub,rows,opt){
   return h+'</div></div>';}
 /* ---------- Zustand ---------- */
 var CUR='start',GRP=null,TFC=null,PA=null,PB=null,SB=load('wp26_sb',window.matchMedia('(max-width:900px)').matches?false:true),SORT='a';
+var INTRO_OPEN=load('wp26_introopen',window.matchMedia('(max-width:720px)').matches?false:true);
+var FILT_OPEN=load('wp26_filtopen',window.matchMedia('(max-width:720px)').matches?false:true);
 var FKERN=false, FPAR=[], PSUB='profil', KSORT='seiten', GRPOPEN={}, GRPCLOSED={};
 function fKern(){FKERN=!FKERN;render();}
 function fPartei(p){var i=FPAR.indexOf(p);if(i<0)FPAR.push(p);else FPAR.splice(i,1);render();}
@@ -213,7 +215,7 @@ function sichtbareParteien(){
   if(NOPARF)return P;
   return FPAR.length?P.filter(function(p){return FPAR.indexOf(p)>=0}):P;}
 function filterleiste(n,ges,ohneParteien){
-  var h='<div class="filt"><div class="fgrp"><span class="fl">Filter</span>'+
+  var h='<div class="fgrp"><span class="fl">Filter</span>'+
    '<button class="'+(FKERN?'on':'')+'" onclick="fKern()" '+
    'title="Nur Fragen zeigen, zu denen sich mindestens fünf Parteien äußern">Nur Kernfragen</button></div>';
   if(!ohneParteien){
@@ -225,8 +227,11 @@ function filterleiste(n,ges,ohneParteien){
   if(!ohneParteien)h+='<span class="sep"></span><div class="fgrp">'+psortBtn()+'</div>';
   var sp=sichtbareParteien().length;
   h+='<span class="fcount">'+(n===ges?ges+' Fragen':n+' von '+ges+' Fragen')+
-    (!ohneParteien&&sp<P.length?' · '+sp+' von '+P.length+' Parteien':'')+'</span></div>';
-  return h;}
+    (!ohneParteien&&sp<P.length?' · '+sp+' von '+P.length+' Parteien':'')+'</span>';
+  return '<details class="filt"'+(FILT_OPEN?' open':'')+'><summary>'+
+   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '+
+   'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>'+
+   '<span>Filter</span></summary><div class="fbody">'+h+'</div></details>';}
 /* ---------- Symbole, eingebettet und ohne fremde Bibliothek ---------- */
 function ico(n){var d={
  themen:'<path d="M4 5h16M4 11h16M4 17h10"/>',
@@ -578,11 +583,15 @@ function sortiert(fragen){
     return ((b._kern?1:0)-(a._kern?1:0))||(b._n-a._n);});}
 function vThemen(){
   var sicht=ALL.filter(passt).length;
-  var h='<h2>Themen</h2><p class="lead">Links kannst du das Themenfeld wählen, alternativ durch die '+
-   'Seite scrollen. Die Positionen der Parteien zu einer Frage siehst du, wenn du die Frage anklickst. '+
-   'Du kannst den Positionen zustimmen, die dir am meisten zusagen — die Auswertung deiner Zustimmung '+
-   'findest du im Reiter <b>Auswertung</b>.</p>'+kuerzungshinweis()+
-   kernlegende()+begriffeBox()+filterleiste(sicht,ALL.length);
+  var h='<h2>Themen</h2>';
+  h+='<details class="info themeninfo"'+(INTRO_OPEN?' open':'')+'><summary><h3>Wie diese Übersicht '+
+   'funktioniert</h3><span class="mhint">— kurz: Themenfeld wählen, Positionen vergleichen, zustimmen '+
+   'was passt</span></summary><div class="ti-body"><p class="lead">Links kannst du das Themenfeld '+
+   'wählen, alternativ durch die Seite scrollen. Die Positionen der Parteien zu einer Frage siehst du, '+
+   'wenn du die Frage anklickst. Du kannst den Positionen zustimmen, die dir am meisten zusagen — die '+
+   'Auswertung deiner Zustimmung findest du im Reiter <b>Auswertung</b>.</p>'+kuerzungshinweis()+
+   kernlegende()+begriffeBox()+'</div></details>';
+  h+=filterleiste(sicht,ALL.length);
   if(!sicht)return h+'<div class="empty">Keine Frage passt zu diesen Filtern.</div>';
   D.gruppen.forEach(function(g){
     var n=0;g.tf.forEach(function(t){n+=t.fragen.filter(passt).length});
@@ -604,6 +613,13 @@ function gruppeTf(g){
       '<span class="cnt">'+fr.length+' Fragen'+(k?' · '+k+' Kernfragen':'')+'</span></h3>';
     fr.forEach(function(q){h+=qBlock(q)});});
   return h;}
+function bindKlappen(){
+  var f=document.querySelector('#view details.filt');
+  if(f&&!f.dataset.bound){f.dataset.bound='1';
+    f.addEventListener('toggle',function(){FILT_OPEN=f.open;save('wp26_filtopen',f.open)});}
+  var t=document.querySelector('#view details.themeninfo');
+  if(t&&!t.dataset.bound){t.dataset.bound='1';
+    t.addEventListener('toggle',function(){INTRO_OPEN=t.open;save('wp26_introopen',t.open)});}}
 function lazyGruppenBinden(){
   document.querySelectorAll('#shell details.grp[data-g]').forEach(function(d){
     var gc=d.dataset.g;
@@ -973,6 +989,7 @@ function render(){
     if(FT)el.querySelector('#view').appendChild(FT);}
   offeneSetzen(vor);
   lazyGruppenBinden();
+  bindKlappen();
   spyRun();
   karussellSpeed();
   updMk();}
