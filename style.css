@@ -117,6 +117,19 @@ footer a{color:var(--soft)}
 .way span{color:var(--mid);font-size:14.5px;line-height:1.45;display:block}
 .way .ico{position:absolute;top:16px;right:17px;color:var(--softer)}
 .way:hover .ico{color:var(--accent)}
+.qbig{width:100%;font:inherit;font-size:17px;padding:14px 18px;border:1px solid var(--line);
+ background:var(--paper);color:var(--ink);margin:18px 0 8px}
+.qbig:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.beispiel{border:1px solid var(--line);background:var(--sunk);padding:20px 22px;margin:20px 0}
+.bstitel{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--softer)}
+details.info{margin:22px 0}
+details.info>summary{cursor:pointer;list-style:none;padding:2px 0}
+details.info>summary::-webkit-details-marker{display:none}
+details.info>summary::before{content:"▸";color:var(--soft);font-size:14px;display:inline-block;
+ width:14px;transition:transform .15s}
+details.info[open]>summary::before{transform:rotate(90deg)}
+details.info>summary h3{display:inline;margin:0}
+details.info .mhint{color:var(--soft);font-size:14px;font-weight:400;margin-left:4px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:1px;margin:12px 0 28px;
  border-top:1px solid var(--line2);border-left:1px solid var(--line2)}
 .gcard{background:var(--card);border:none;border-right:1px solid var(--line2);border-bottom:1px solid var(--line2);

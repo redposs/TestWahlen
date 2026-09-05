@@ -144,7 +144,7 @@ function chart(title,sub,rows,opt){
   opt=opt||{};
   var two=opt.two, names=opt.names||[], col=opt.col||['var(--c1)','var(--c2)'];
   var kontrast=BALKEN==='kontrast';
-  if(kontrast)col=two?['#14161A','#5A6070']:['#14161A'];
+  if(kontrast)col=two?['#14161A','repeating-linear-gradient(135deg,#14161A,#14161A 5px,#fff 5px,#fff 10px)']:['#14161A'];
   var eh=opt.einheit===undefined?' %':opt.einheit;
   var mx=Math.max.apply(null,rows.map(function(r){return two?Math.max(r.a,r.b):r.a}))||1;
   var nk=opt.nk===undefined?1:opt.nk;
@@ -295,8 +295,44 @@ function sbPartei(){
     return '<a href="#p-'+x[0]+'" class="sp-p'+x[0]+'" onclick="scrollTo2(\'p-'+x[0]+
       '\');return false">'+x[1]+'</a>'}).join('');}
 function scrollTo2(id){var el=document.getElementById(id);
-  if(el)el.scrollIntoView({block:'start',behavior:'smooth'})}
+  if(el){if(el.tagName==='DETAILS')el.open=true;el.scrollIntoView({block:'start',behavior:'smooth'})}}
 /* ---------- Ansichten ---------- */
+/* ---------- Startseite: Beispiel-Teaser ----------
+   Einmal pro Seitenaufruf zufaellig gewaehlt und dann fuer die restliche Sitzung
+   festgehalten, damit sich der Teaser nicht bei jedem Rendern (z.B. Merkzettel-Stern)
+   unter der Hand aendert. */
+var BEISPIEL=null, BEISPIEL_STREIT=null;
+function beispiel(){
+  if(!BEISPIEL){
+    var kern=ALL.filter(function(q){return q._kern});
+    var q=kern[Math.floor(Math.random()*kern.length)];
+    var ps=Object.keys(q.z);
+    var p=ps[Math.floor(Math.random()*ps.length)];
+    BEISPIEL={q:q,p:p};}
+  return BEISPIEL;}
+function beispielTeaser(){
+  var b=beispiel();
+  return '<div class="beispiel"><div class="bstitel">Beispiel aus den Programmen</div>'+
+   '<h3 style="margin:6px 0 12px">'+esc(b.q.f)+'</h3>'+card(b.p,b.q.z[b.p])+
+   '<p class="lead" style="margin-top:12px">Zu jeder der '+D.meta.ut+' Fragen stehen alle sieben '+
+   'Positionen — so wie hier. <button class="lnk" onclick="jump(\''+b.q.c+
+   '\')">Alle 7 Positionen zu dieser Frage ansehen</button></p></div>';}
+function beispielStreit(){
+  if(!BEISPIEL_STREIT){
+    var s=streitFragen();
+    BEISPIEL_STREIT=s[Math.floor(Math.random()*s.length)];}
+  return BEISPIEL_STREIT;}
+function streitTeaser(){
+  var q=beispielStreit();
+  return '<div class="beispiel"><div class="bstitel">Eine von '+streitFragen().length+
+   ' Streitfragen</div><h3 style="margin:6px 0 12px">'+esc(q.f)+'</h3>'+lagerzeile(q)+
+   '<p class="lead" style="margin-top:12px"><button class="lnk" '+
+   'onclick="go(\'streit\')">Alle Streitfragen ansehen</button></p></div>';}
+function methodikBox(){
+  return '<details class="info sp" id="s-methodik" data-sp="s-methodik"><summary><h3>'+
+   'Wie diese Übersicht entstanden ist</h3><span class="mhint">— kurz: alle sieben Programme '+
+   'vollständig gelesen, mit einem KI-System in 484 Fragen gegliedert, jede Aussage mit Seite '+
+   'und Zitat belegt. Mehr erfahren</span></summary>'+vMethodik()+'</details>';}
 function parteienListe(){
   var a=P.slice();
   if(a.length<2)return a.join('');
@@ -307,17 +343,34 @@ function vStart(){
   h+='<p class="hero">Sieben Programme, '+M.seiten.toLocaleString('de-DE')+' Seiten, '+
    'eine Frage nach der anderen.</p>';
   h+='<p class="lead gross">Am 20. September 2026 wird das Berliner Abgeordnetenhaus gewählt. '+
-   'Wir haben die Wahlprogramme der sieben Parteien '+esc(parteienListe())+' ausgewertet und auf '+
-   'dieser Seite vergleichbar gemacht. Diese Auswertung bezieht sich ausschließlich auf diese '+
-   'sieben Wahlprogramme — weitere antretende Parteien oder Gruppierungen sind hier nicht '+
-   'erfasst.</p>';
-  h+='<p class="lead gross">Dafür sind die Programme in '+M.ut+' Fragen zerlegt, von der '+
-   'Mietenbegrenzung über die Vergabe von Schulplätzen bis zur Zukunft des Tempelhofer Felds. '+
-   'Zu jeder Frage steht, was jedes Programm dazu sagt — kurz zusammengefasst, mit wörtlichem '+
-   'Zitat und der Angabe, auf welcher Seite des jeweiligen Wahlprogramms die Aussage steht. '+
-   'Wo ein Programm zu einer Frage keine Aussage trifft, ist auch das so dargestellt. '+
-   'Es handelt sich dabei nicht um eine Ablehnung.</p>';
-  h+='<h3 id="s-wege" class="sp" data-sp="s-wege">So kommst du durch die Seite</h3>';
+   M.ut+' Fragen, jede mit den Positionen der sieben Parteien '+esc(parteienListe())+' — '+
+   'wörtlich zitiert, mit Seitenangabe. Diese Auswertung bezieht sich ausschließlich auf diese '+
+   'sieben Wahlprogramme, keine Bewertung, keine Wahlempfehlung.</p>';
+  var qv=document.getElementById('q')?document.getElementById('q').value:'';
+  h+='<input id="q2" class="qbig" type="search" '+
+   'placeholder="Direkt eine Frage suchen … z. B. Mietendeckel, Tempelhofer Feld, Kita-Plätze" '+
+   'value="'+esc(qv)+'" oninput="suchSync(this.value)" '+
+   'aria-label="In allen Fragen und Antworten suchen">';
+  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Vier Einstiege</h3>';
+  h+='<div class="ways">'+
+   '<button class="way" onclick="go(\'themen\')">'+ico('themen')+'<b>Nach Thema stöbern</b>'+
+   '<span>'+M.ut+' Fragen in neun Themengruppen, mit den Antworten aller sieben Programme '+
+   'nebeneinander.</span></button>'+
+   '<button class="way" onclick="go(\'streit\')">'+ico('streit')+'<b>Wo wird gestritten?</b>'+
+   '<span>Die '+streitFragen().length+' Fragen, bei denen mindestens eine Partei ablehnt, was '+
+   'eine andere fordert.</span></button>'+
+   '<button class="way" onclick="go(\'partei\')">'+ico('partei')+'<b>Eine Partei ansehen</b>'+
+   '<span>Profil eines Programms: Schwerpunkte, Alleinstellungen, was es ablehnt, was es in '+
+   'Zahlen zusagt.</span></button>'+
+   '<button class="way" onclick="go(\'ausw\')">'+ico('ausw')+'<b>Eigene Auswahl auswerten</b>'+
+   '<span>Positionen zustimmen und sehen, wie sich die Zustimmung über die Themen '+
+   'verteilt.</span></button>'+
+   '</div>';
+  h+='<div id="s-beispiel" class="sp" data-sp="s-beispiel">'+beispielTeaser()+'</div>';
+  h+='<div id="s-streit" class="sp" data-sp="s-streit">'+streitTeaser()+'</div>';
+  h+='<details class="info sp" id="s-wege" data-sp="s-wege"><summary><h3>So kommst du durch die '+
+   'Seite</h3><span class="mhint">— kurz: oben die Reiter wählen, hier stehen sie einzeln '+
+   'erklärt</span></summary>';
   var wege=[
    ['themen','Themen','kannst du die Positionen jeder Partei zu jeder Frage einsehen und '+
     'vergleichen. Fragen kannst du mit dem Stern auf die Merkliste setzen. Positionen kannst '+
@@ -337,26 +390,11 @@ function vStart(){
      'betreffende Seite im PDF.':' mit ihren Eckdaten.')]];
   h+='<div class="wege">'+wege.map(function(w){
     return '<p><button class="lnk" onclick="go(\''+w[0]+'\')">Im Reiter '+esc(w[1])+
-      '</button> '+w[2]+'</p>'}).join('')+'</div>';
+      '</button> '+w[2]+'</p>'}).join('')+'</div></details>';
   h+='<p class="lead gross">Was du hier nicht findest: eine Empfehlung. Diese Seite bewertet '+
    'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
    'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht. '+
    'Das Urteil bleibt bei dir.</p>';
-  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Vier Einstiege</h3>';
-  h+='<div class="ways">'+
-   '<button class="way" onclick="go(\'themen\')">'+ico('themen')+'<b>Nach Thema stöbern</b>'+
-   '<span>'+M.ut+' Fragen in neun Themengruppen, mit den Antworten aller sieben Programme '+
-   'nebeneinander.</span></button>'+
-   '<button class="way" onclick="go(\'partei\')">'+ico('partei')+'<b>Eine Partei ansehen</b>'+
-   '<span>Profil eines Programms: Schwerpunkte, Alleinstellungen, was es ablehnt, was es in '+
-   'Zahlen zusagt.</span></button>'+
-   '<button class="way" onclick="go(\'streit\')">'+ico('streit')+'<b>Wo wird gestritten?</b>'+
-   '<span>Die '+streitFragen().length+' Fragen, bei denen mindestens eine Partei ablehnt, was '+
-   'eine andere fordert.</span></button>'+
-   '<button class="way" onclick="go(\'ausw\')">'+ico('ausw')+'<b>Eigene Auswahl auswerten</b>'+
-   '<span>Positionen zustimmen und sehen, wie sich die Zustimmung über die Themen '+
-   'verteilt.</span></button>'+
-   '</div>';
   h+='<h3 id="s-gruppen" class="sp" data-sp="s-gruppen">Die neun Themengruppen</h3><div class="grid">';
   D.gruppen.forEach(function(g){
     var n=0,k=0;g.tf.forEach(function(t){n+=t.fragen.length;
@@ -364,7 +402,7 @@ function vStart(){
     h+='<button class="gcard" onclick="jumpTf(\''+g.tf[0].c+'\')"><b>'+esc(g.n)+'</b>'+
        '<span>'+n+' Fragen · '+k+' Kernfragen</span></button>';});
   h+='</div>';
-  h+=vMethodik();
+  h+=methodikBox();
   return h;}
 /* ---------- Methodik: steht am Fuß der Startseite ----------
    Alle Zahlen werden aus den Daten gezogen, damit sie nach Korrekturen richtig bleiben. */
@@ -387,7 +425,7 @@ function vMethodik(){
   var anteile=P.map(function(p){return D.schwer[p].belegte/D.stats[p].seiten*100});
   var amin=Math.round(Math.min.apply(null,anteile)), amax=Math.round(Math.max.apply(null,anteile));
   var tfz=0;D.gruppen.forEach(function(g){tfz+=g.tf.length});
-  var h='<h3 id="s-methodik" class="sp" data-sp="s-methodik">Wie diese Übersicht entstanden ist</h3>';
+  var h='';
   function ab(t,k){return '<h4 class="mh">'+t+'</h4>'+k;}
   h+=ab('Was ausgewertet wurde',
    '<p class="lead">Grundlage sind ausschließlich die sieben Wahlprogramme zur Wahl des Berliner '+
@@ -472,8 +510,9 @@ function zurMethodik(){
   if(CUR!=='start'){go('start');setTimeout(function(){scrollTo2('s-methodik')},80);}
   else scrollTo2('s-methodik');}
 function sbStart(){
-  var a=[['s-intro','Worum es geht'],['s-wege','So kommst du durch die Seite'],
-         ['s-einstieg','Vier Einstiege'],['s-gruppen','Die neun Themengruppen'],
+  var a=[['s-intro','Worum es geht'],['s-einstieg','Vier Einstiege'],
+         ['s-beispiel','Beispiel aus den Programmen'],['s-streit','Wo wird gestritten'],
+         ['s-wege','So kommst du durch die Seite'],['s-gruppen','Die neun Themengruppen'],
          ['s-methodik','Wie das entstanden ist']];
   return '<h4>Startseite</h4>'+a.map(function(x){
     return '<a href="#'+x[0]+'" class="sp-'+x[0]+'" onclick="scrollTo2(\''+x[0]+
@@ -494,7 +533,7 @@ function vThemen(){
     if(!n)return;
     var offen=g.tf.some(function(t){return t.c===TFC});
     var voll=offen||GRP===g.c||GRPOPEN[g.c];
-    h+='<details class="grp"'+(offen||GRP===g.c?' open':'')+' data-g="'+g.c+'"><summary>'+esc(g.n)+
+    h+='<details class="grp"'+(voll?' open':'')+' data-g="'+g.c+'"><summary>'+esc(g.n)+
       '<span class="cnt">'+n+' '+(n===1?'Frage':'Fragen')+'</span></summary>'+
       (voll?'<div class="tf">'+gruppeTf(g)+'</div>':'<div class="tf" data-lazy-g="'+g.c+'"></div>')+
       '</details>';});
@@ -518,6 +557,7 @@ function lazyGruppenBinden(){
       GRPOPEN[gc]=true;
       var tf=d.querySelector('.tf[data-lazy-g]');
       if(tf){var g=BYGRP[gc];if(g){tf.innerHTML=gruppeTf(g);}tf.removeAttribute('data-lazy-g');}
+      window.requestAnimationFrame(spyRun);
       d.removeEventListener('toggle',bind);});});}
 function streitFragen(){return ALL.filter(function(q){return q.art==='gegenlaeufig'});}
 function vStreit(){
@@ -918,15 +958,19 @@ function spyRun(){
 }
 window.addEventListener('scroll',function(){
   if(!SPYT){SPYT=true;window.requestAnimationFrame(spyRun)}},{passive:true});
+var SUCHT=null;
+function suchSync(v){
+  var q=document.getElementById('q'); if(q&&q.value!==v)q.value=v;
+  var q2=document.getElementById('q2'); if(q2&&q2.value!==v)q2.value=v;
+  clearTimeout(SUCHT);
+  SUCHT=setTimeout(function(){
+    if(v.trim()){CUR='suche';
+      document.querySelectorAll('nav button[data-v]').forEach(function(b){b.className=''});render()}
+    else go('start')},220);}
 function start(){
   document.querySelectorAll('nav button[data-v]').forEach(function(b){
     b.onclick=function(){document.getElementById('q').value='';go(b.dataset.v)}});
-  var t=null;
-  document.getElementById('q').addEventListener('input',function(e){
-    clearTimeout(t);t=setTimeout(function(){
-      if(e.target.value.trim()){CUR='suche';
-        document.querySelectorAll('nav button[data-v]').forEach(function(b){b.className=''});render()}
-      else go('start')},220);});
+  document.getElementById('q').addEventListener('input',function(e){suchSync(e.target.value)});
   function navh(){var el=document.querySelector('header');
     if(el)document.documentElement.style.setProperty('--navh',el.offsetHeight+'px');}
   window.addEventListener('resize',navh);
