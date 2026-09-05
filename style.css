@@ -199,11 +199,11 @@ details.q[open] .qf{font-family:Archivo,sans-serif;font-style:normal;font-weight
 .meta div{margin-top:3px}
 .meta .lbl{font-weight:600;color:var(--ink2)}
 .beleg{color:var(--accent);font-weight:600}
-/* ============ Legende ============ */
-.leg{display:flex;gap:15px;flex-wrap:wrap;font-size:13.5px;color:var(--mid);margin:10px 0 18px;
- align-items:center}
-.leg span{display:flex;align-items:center;gap:6px}
-.sw{width:32px;height:22px;background:var(--sunk);border-bottom:2px solid var(--hair);flex-shrink:0}
+/* ============ Begriffe (aufklappbare Legende) ============ */
+details.info.begriffe{margin:14px 0 22px}
+.begr{margin:10px 0 2px}
+.begr p{margin:0 0 10px;color:var(--ink2);font-size:14.5px;line-height:1.5}
+.begr p .badge{margin-right:8px;vertical-align:1px}
 /* ============ Tabellen ============ */
 table{border-collapse:collapse;width:100%;background:var(--card);font-size:14.5px;
  border-top:1px solid var(--ink)}

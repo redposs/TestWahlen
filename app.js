@@ -132,12 +132,23 @@ function qBlock(q,open,pick,zusatz){
       return card(p,q.z[p],{ut:q.c,pick:pick&&q.z[p]})}).join('')+
     '</div></div></details>';
   return h;}
-function legende(){return '<div class="leg">'+
+function begriffeBox(){
+  return '<details class="info begriffe"><summary><h3>Was bedeuten die Begriffe?</h3>'+
+   '<span class="mhint">— kurz erklärt: die Antwort-Arten und die Hinweise unter manchen Fragen</span>'+
+   '</summary><div class="begr">'+
+   '<p><b>Die Antwort-Arten:</b></p>'+
    ['K','A','T','Z'].map(function(k){
-     return '<span title="'+esc(LEGT[k])+'"><i class="sw" style="border-bottom-color:var(--'+k.toLowerCase()+')"></i>'+
-       SLL[k]+'</span>'}).join('')+
-   '<span title="Das Thema kommt im Programm nicht vor. Das ist keine Ablehnung."><i class="sw" '+
-   'style="border-bottom-color:var(--hair)"></i>Steht nicht im Programm</span></div>';}
+     return '<p><b>'+esc(SLL[k])+'.</b> '+esc(LEGT[k])+'</p>'}).join('')+
+   '<p><b>Steht nicht im Programm.</b> Das Thema kommt im Programm nicht vor. Das ist keine '+
+   'Ablehnung.</p>'+
+   '<p style="margin-top:14px"><b>Die Hinweise unter manchen Fragen:</b></p>'+
+   '<p><span class="badge um">Umstritten</span> Mindestens eine Partei lehnt ausdrücklich ab, was '+
+   'mindestens eine andere fordert.</p>'+
+   '<p><span class="badge kw">Kein Widerspruch</span> Keine Partei lehnt hier ausdrücklich ab. Die '+
+   'konkreten Vorschläge können trotzdem weit auseinandergehen — vergleiche die Antworten.</p>'+
+   '<p><span class="badge vg">Nur bedingt vergleichbar</span> Die Programme beantworten die Frage '+
+   'nicht in vergleichbarer Weise, zum Beispiel weil sie unterschiedliche Ebenen oder Zeiträume '+
+   'meinen.</p></div></details>';}
 /* ---------- Balkendiagramm ---------- */
 // opt: {two:bool, names:[..], col:[farbe1,farbe2], sort:'html der Sortierleiste', einheit:'%'}
 function chart(title,sub,rows,opt){
@@ -244,7 +255,7 @@ function sbThemen(){
     g.tf.forEach(function(t){
       var m=t.fragen.filter(passt).length;
       if(!m)return;
-      h+='<a href="#" class="sp-'+t.c+(TFC===t.c?' on':'')+'" onclick="jumpTf(\''+t.c+'\');return false">'+
+      h+='<a href="#" class="sp-'+t.c+'" onclick="jumpTf(\''+t.c+'\');return false">'+
         esc(t.n)+'<small>'+m+' Fragen</small></a>';});});
   return h;}
 function sbAusw(){
@@ -306,14 +317,14 @@ function beispiel(){
   if(!BEISPIEL){
     var kern=ALL.filter(function(q){return q._kern});
     var q=kern[Math.floor(Math.random()*kern.length)];
-    var ps=Object.keys(q.z);
-    var p=ps[Math.floor(Math.random()*ps.length)];
-    BEISPIEL={q:q,p:p};}
+    BEISPIEL={q:q};}
   return BEISPIEL;}
 function beispielTeaser(){
   var b=beispiel();
   return '<div class="beispiel"><div class="bstitel">Beispiel aus den Programmen</div>'+
-   '<h3 style="margin:6px 0 12px">'+esc(b.q.f)+'</h3>'+card(b.p,b.q.z[b.p])+
+   '<h3 style="margin:6px 0 12px">'+esc(b.q.f)+'</h3>'+
+   '<div class="pos">'+sichtbareParteien().map(function(p){return card(p,b.q.z[p])}).join('')+
+   '</div>'+
    '<p class="lead" style="margin-top:12px">Zu jeder der '+D.meta.ut+' Fragen stehen alle sieben '+
    'Positionen — so wie hier. <button class="lnk" onclick="jump(\''+b.q.c+
    '\')">Alle 7 Positionen zu dieser Frage ansehen</button></p></div>';}
@@ -331,21 +342,26 @@ function streitTeaser(){
 function methodikBox(){
   return '<details class="info sp" id="s-methodik" data-sp="s-methodik"><summary><h3>'+
    'Wie diese Übersicht entstanden ist</h3><span class="mhint">— kurz: alle sieben Programme '+
-   'vollständig gelesen, mit einem KI-System in 484 Fragen gegliedert, jede Aussage mit Seite '+
-   'und Zitat belegt. Mehr erfahren</span></summary>'+vMethodik()+'</details>';}
+   'vollständig gelesen, mit einem KI-System in '+D.meta.ut+' Fragen gegliedert, jede Aussage '+
+   'mit Seite und Zitat belegt. Mehr erfahren</span></summary>'+vMethodik()+'</details>';}
 function parteienListe(){
   var a=P.slice();
   if(a.length<2)return a.join('');
   return a.slice(0,-1).join(', ')+' und '+a[a.length-1];}
 function vStart(){
   var M=D.meta;
+  var tfz=0;D.gruppen.forEach(function(g){tfz+=g.tf.length});
   var h='<div id="s-intro" class="sp" data-sp="s-intro"></div>';
-  h+='<p class="hero">Sieben Programme, '+M.seiten.toLocaleString('de-DE')+' Seiten, '+
-   'eine Frage nach der anderen.</p>';
+  h+='<p class="hero">Sieben Programme, '+M.seiten.toLocaleString('de-DE')+' Seiten; '+
+   M.ut+' Fragen.</p>';
   h+='<p class="lead gross">Am 20. September 2026 wird das Berliner Abgeordnetenhaus gewählt. '+
-   M.ut+' Fragen, jede mit den Positionen der sieben Parteien '+esc(parteienListe())+' — '+
-   'wörtlich zitiert, mit Seitenangabe. Diese Auswertung bezieht sich ausschließlich auf diese '+
-   'sieben Wahlprogramme, keine Bewertung, keine Wahlempfehlung.</p>';
+   'Hier kannst du die Positionen und Inhalte der Wahlprogramme der beliebtesten Parteien anhand '+
+   'von '+M.ut+' Fragen entlang von '+tfz+' Themenfeldern auswerten und vergleichen. Jede '+
+   'Position ist wörtlich zitiert und mit Seitenangabe zum originalen Wahlprogramm versehen. '+
+   'Diese Auswertung bezieht sich ausschließlich auf diese sieben Wahlprogramme. Sie beinhaltet '+
+   'keine Bewertung oder Empfehlung.</p>';
+  h+='<p class="lead">Die Wahlprogramme folgender Parteien wurden ausgewertet: '+
+   esc(P.join(', '))+'</p>';
   var qv=document.getElementById('q')?document.getElementById('q').value:'';
   h+='<input id="q2" class="qbig" type="search" '+
    'placeholder="Direkt eine Frage suchen … z. B. Mietendeckel, Tempelhofer Feld, Kita-Plätze" '+
@@ -372,29 +388,28 @@ function vStart(){
    'Seite</h3><span class="mhint">— kurz: oben die Reiter wählen, hier stehen sie einzeln '+
    'erklärt</span></summary>';
   var wege=[
-   ['themen','Themen','kannst du die Positionen jeder Partei zu jeder Frage einsehen und '+
+   ['themen','Themen','hier kannst du die Positionen jeder Partei zu jeder Frage einsehen und '+
     'vergleichen. Fragen kannst du mit dem Stern auf die Merkliste setzen. Positionen kannst '+
     'du zustimmen.'],
-   ['partei','Parteien','kannst du ein einzelnes Programm im Profil ansehen — Schwerpunkte, '+
+   ['partei','Parteien','hier kannst du ein einzelnes Programm im Profil ansehen — Schwerpunkte, '+
     'Alleinstellungen, Ablehnungen, Zusagen mit Zahlen. Wählst du eine zweite Partei dazu, stehen '+
     'beide nebeneinander. Ein Unterreiter stellt die Kennzahlen aller sieben Programme in einer '+
     'Tabelle gegenüber.'],
-   ['streit','Streitfragen','kannst du die Fragen nachlesen, bei denen mindestens eine Partei '+
+   ['streit','Streitfragen','hier kannst du die Fragen nachlesen, bei denen mindestens eine Partei '+
     'ablehnt, was eine andere fordert.'],
-   ['ausw','Auswertung','kannst du einsehen, wie sich deine Zustimmung über die Parteien, die '+
+   ['ausw','Auswertung','hier kannst du einsehen, wie sich deine Zustimmung über die Parteien, die '+
     'Themengruppen und die einzelnen Themenfelder verteilt. Sie bleibt in deinem Browser und wird '+
     'nirgends gespeichert.'],
-   ['merk','Merkliste','findest du die Fragen wieder, die du dir gemerkt hast.'],
-   ['prog','Programme','stehen die sieben Originaldokumente'+
-    (PDFS?' zum Herunterladen. Jede Seitenangabe in den Antworten führt direkt auf die '+
-     'betreffende Seite im PDF.':' mit ihren Eckdaten.')]];
+   ['merk','Merkliste','hier findest du die Fragen wieder, die du dir gemerkt hast.'],
+   ['prog','Programme','hier findest du die Eckdaten zu jedem Wahlprogramm'+
+    (PDFS?' sowie die Originaldokumente zum Herunterladen. Jede Seitenangabe in den Antworten '+
+     'führt direkt auf die betreffende Seite im PDF.':'.')]];
   h+='<div class="wege">'+wege.map(function(w){
-    return '<p><button class="lnk" onclick="go(\''+w[0]+'\')">Im Reiter '+esc(w[1])+
-      '</button> '+w[2]+'</p>'}).join('')+'</div></details>';
-  h+='<p class="lead gross">Was du hier nicht findest: eine Empfehlung. Diese Seite bewertet '+
+    return '<p><button class="lnk" onclick="go(\''+w[0]+'\')">'+esc(w[1])+
+      '</button> — '+w[2]+'</p>'}).join('')+'</div></details>';
+  h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
    'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
-   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht. '+
-   'Das Urteil bleibt bei dir.</p>';
+   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
   h+='<h3 id="s-gruppen" class="sp" data-sp="s-gruppen">Die neun Themengruppen</h3><div class="grid">';
   D.gruppen.forEach(function(g){
     var n=0,k=0;g.tf.forEach(function(t){n+=t.fragen.length;
@@ -526,7 +541,7 @@ function vThemen(){
    'Seite scrollen. Die Positionen der Parteien zu einer Frage siehst du, wenn du die Frage anklickst. '+
    'Du kannst den Positionen zustimmen, die dir am meisten zusagen — die Auswertung deiner Zustimmung '+
    'findest du im Reiter <b>Auswertung</b>.</p>'+kuerzungshinweis()+
-   kernlegende()+legende()+filterleiste(sicht,ALL.length);
+   kernlegende()+begriffeBox()+filterleiste(sicht,ALL.length);
   if(!sicht)return h+'<div class="empty">Keine Frage passt zu diesen Filtern.</div>';
   D.gruppen.forEach(function(g){
     var n=0;g.tf.forEach(function(t){n+=t.fragen.filter(passt).length});
@@ -569,7 +584,7 @@ function vStreit(){
    'ablehnt und zugleich einen eigenen Vorschlag macht. In den Antworten steht bei ihr dann '+
    '„Teils dafür, teils dagegen" oder eine Forderung mit dem Zusatz, dass sie dabei ausdrücklich '+
    'etwas ablehnt. „Nur Ablehnung" steht nur dort, wo das Programm keinen eigenen Weg beschreibt.</div>'+
-   filterleiste(um.length,ges,true)+kernlegende()+legende();
+   filterleiste(um.length,ges,true)+kernlegende()+begriffeBox();
   if(!um.length){NOPARF=false;return h+'<div class="empty">Keine Frage passt zu diesem Filter.</div>';}
   D.gruppen.forEach(function(g){
     var teil=um.filter(function(q){return q._gc===g.c});
@@ -850,7 +865,7 @@ function vMerk(){
   if(!uts.length)return h+'<div class="empty">Noch nichts gemerkt. Klicke bei einer Frage auf den '+
     'Stern, um sie hier zu sammeln.</div>';
   h+='<p class="lead">'+uts.length+' gemerkte '+(uts.length===1?'Frage':'Fragen')+'. Die Liste bleibt '+
-   'in diesem Browser gespeichert und wird nirgends übertragen.</p>'+legende();
+   'in diesem Browser gespeichert und wird nirgends übertragen.</p>'+begriffeBox();
   var byg={};
   uts.forEach(function(u){var q=BYUT[u];if(!q)return;(byg[q._g]=byg[q._g]||[]).push(q)});
   Object.keys(byg).forEach(function(g){h+='<h3>'+esc(g)+'</h3>';
@@ -866,7 +881,7 @@ function vSuche(t){
   var h='<h2>Suche</h2><p class="lead">'+hits.length+' Treffer für „'+esc(t)+
     '" — gesucht wird in den Fragen und im Text aller Antworten.</p>';
   if(!hits.length)return h+'<div class="empty">Nichts gefunden. Versuch ein anderes Wort.</div>';
-  h+=legende();
+  h+=begriffeBox();
   hits.slice(0,80).forEach(function(q){
     h+='<div style="font-size:12.5px;color:var(--soft);margin-top:14px">'+esc(q._g)+' › '+esc(q._t)+
       '</div>'+qBlock(q);});
