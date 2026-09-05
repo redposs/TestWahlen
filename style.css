@@ -123,7 +123,7 @@ footer a{color:var(--soft)}
 .qbig:focus-visible{outline:2px solid var(--ink);outline-offset:2px;border-color:var(--accent)}
 .pl-cap{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--soft);
  text-transform:uppercase;margin:26px 0 12px}
-.pl-row{display:flex;flex-wrap:wrap;gap:18px;margin:0 0 4px}
+.pl-row{display:flex;flex-wrap:wrap;gap:18px;margin:0 0 26px}
 .pl-item{display:flex;flex-direction:column;align-items:center;gap:8px;width:80px;
  border:none;background:none;font:inherit;padding:0;cursor:pointer}
 .pl-item:hover .pl-badge{border-color:var(--accent)}
@@ -171,8 +171,8 @@ details.info .mhint{color:var(--soft);font-size:14px;font-weight:400;margin-left
 .gcard b{display:block;font-size:16px;font-weight:700;margin-bottom:3px}
 .gcard span{color:var(--soft);font-size:13px}
 /* ============ Gruppen, Themenfelder, Fragen ============ */
-details.grp{background:var(--card);border-top:3px solid var(--ink);margin:0}
-details.grp+details.grp{border-top:3px solid var(--ink);margin-top:8px}
+details.grp{background:var(--card);border-top:2px solid var(--line);margin:0}
+details.grp+details.grp{border-top:2px solid var(--line);margin-top:8px}
 details.grp>summary{padding:18px 0 16px;cursor:pointer;font-weight:700;font-size:25px;
  letter-spacing:-.015em;list-style:none;display:flex;align-items:baseline;gap:11px;flex-wrap:wrap}
 details.grp>summary::-webkit-details-marker{display:none}
@@ -361,7 +361,7 @@ h3.sp:not(.tfhd){border-top:2px solid var(--ink);padding-top:24px;margin-top:38p
 .lager b{font-weight:600}
 /* ============ Filter ============ */
 .filt{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px 0;margin:14px 0 6px;
- border-bottom:1px solid var(--line)}
+ border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .filt .fl{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
  color:var(--softer);margin-right:2px}
 .filt button{font:inherit;font-size:13.5px;padding:7px 13px;border:1px solid var(--line);

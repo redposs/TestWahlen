@@ -399,6 +399,7 @@ function vStart(){
    'von '+M.ut+' Fragen entlang von '+tfz+' Themenfeldern auswerten und vergleichen. Jede '+
    'Position ist wörtlich zitiert und mit Seitenangabe zum originalen Wahlprogramm versehen.</p>';
   h+=parteiLogos();
+  h+=karussellTeaser();
   h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
    'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
    'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
@@ -406,7 +407,8 @@ function vStart(){
   var qv=document.getElementById('q')?document.getElementById('q').value:'';
   h+='<input id="q2" class="qbig" type="search" '+
    'placeholder="Direkt eine Frage suchen … z. B. Mietendeckel, Tempelhofer Feld, Kita-Plätze" '+
-   'value="'+esc(qv)+'" oninput="suchSync(this.value)" '+
+   'value="'+esc(qv)+'" oninput="suchEingabe(this.value)" '+
+   'onkeydown="if(event.key===\'Enter\')suchAusloesen(this.value)" '+
    'aria-label="In allen Fragen und Antworten suchen">';
   h+='<div class="ways">'+
    '<button class="way" onclick="go(\'themen\')">'+ico('themen')+'<b>Nach Thema stöbern</b>'+
@@ -429,7 +431,6 @@ function vStart(){
     h+='<button class="gcard" onclick="jumpTf(\''+g.tf[0].c+'\')"><b>'+esc(g.n)+'</b>'+
        '<span>'+n+' Fragen · '+k+' Kernfragen</span></button>';});
   h+='</div>';
-  h+=karussellTeaser();
   h+='<div id="s-beispiel" class="sp" data-sp="s-beispiel">'+beispielTeaser()+'</div>';
   h+='<div id="s-streit" class="sp" data-sp="s-streit">'+streitTeaser()+'</div>';
   h+='<details class="info sp" id="s-wege" data-sp="s-wege"><summary><h3>So kommst du durch die '+
@@ -1032,19 +1033,22 @@ function spyRun(){
 }
 window.addEventListener('scroll',function(){
   if(!SPYT){SPYT=true;window.requestAnimationFrame(spyRun)}},{passive:true});
-var SUCHT=null;
-function suchSync(v){
+function suchEingabe(v){
   var q=document.getElementById('q'); if(q&&q.value!==v)q.value=v;
   var q2=document.getElementById('q2'); if(q2&&q2.value!==v)q2.value=v;
-  clearTimeout(SUCHT);
-  SUCHT=setTimeout(function(){
-    if(v.trim()){CUR='suche';
-      document.querySelectorAll('nav button[data-v]').forEach(function(b){b.className=''});render()}
-    else go('start')},220);}
+  if(!v.trim()&&CUR==='suche')go('start');}
+function suchAusloesen(v){
+  v=(v||'').trim();
+  if(!v){if(CUR==='suche')go('start');return;}
+  CUR='suche';
+  document.querySelectorAll('nav button[data-v]').forEach(function(b){b.className=''});
+  render();}
 function start(){
   document.querySelectorAll('nav button[data-v]').forEach(function(b){
     b.onclick=function(){document.getElementById('q').value='';go(b.dataset.v)}});
-  document.getElementById('q').addEventListener('input',function(e){suchSync(e.target.value)});
+  document.getElementById('q').addEventListener('input',function(e){suchEingabe(e.target.value)});
+  document.getElementById('q').addEventListener('keydown',function(e){
+    if(e.key==='Enter')suchAusloesen(e.target.value)});
   function navh(){var el=document.querySelector('header');
     if(el)document.documentElement.style.setProperty('--navh',el.offsetHeight+'px');}
   window.addEventListener('resize',navh);
