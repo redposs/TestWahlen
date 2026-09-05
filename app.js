@@ -200,7 +200,7 @@ function saeulen(title,sub,rows,opt){
   return h+'</div></div>';}
 /* ---------- Zustand ---------- */
 var CUR='start',GRP=null,TFC=null,PA=null,PB=null,SB=load('wp26_sb',window.matchMedia('(max-width:900px)').matches?false:true),SORT='a';
-var FKERN=false, FPAR=[], PSUB='profil', KSORT='seiten', GRPOPEN={};
+var FKERN=false, FPAR=[], PSUB='profil', KSORT='seiten', GRPOPEN={}, GRPCLOSED={};
 function fKern(){FKERN=!FKERN;render();}
 function fPartei(p){var i=FPAR.indexOf(p);if(i<0)FPAR.push(p);else FPAR.splice(i,1);render();}
 function fAlle(){FPAR=[];FKERN=false;render();}
@@ -312,7 +312,7 @@ function scrollTo2(id){var el=document.getElementById(id);
    Einmal pro Seitenaufruf zufaellig gewaehlt und dann fuer die restliche Sitzung
    festgehalten, damit sich der Teaser nicht bei jedem Rendern (z.B. Merkzettel-Stern)
    unter der Hand aendert. */
-var BEISPIEL=null, BEISPIEL_STREIT=null;
+var BEISPIEL=null, BEISPIEL_STREIT=null, KARUSSELL=null;
 function beispiel(){
   if(!BEISPIEL){
     var kern=ALL.filter(function(q){return q._kern});
@@ -339,6 +339,29 @@ function streitTeaser(){
    ' Streitfragen</div><h3 style="margin:6px 0 12px">'+esc(q.f)+'</h3>'+lagerzeile(q)+
    '<p class="lead" style="margin-top:12px"><button class="lnk" '+
    'onclick="go(\'streit\')">Alle Streitfragen ansehen</button></p></div>';}
+function karussellWahl(){
+  var pool=ALL.filter(function(q){return q._kern});
+  var pick=[],used={},n=Math.min(14,pool.length);
+  while(pick.length<n){
+    var q=pool[Math.floor(Math.random()*pool.length)];
+    if(used[q.c])continue;used[q.c]=true;pick.push(q);}
+  return pick;}
+function karussellTeaser(){
+  if(!KARUSSELL)KARUSSELL=karussellWahl();
+  var chips=KARUSSELL.map(function(q){
+    return '<button class="fragchip" onclick="jump(\''+q.c+'\')">'+esc(q.f)+'</button>'}).join('');
+  var dup=KARUSSELL.map(function(q){
+    return '<button class="fragchip" tabindex="-1" aria-hidden="true" '+
+      'onclick="jump(\''+q.c+'\')">'+esc(q.f)+'</button>'}).join('');
+  return '<div id="s-karussell" class="sp" data-sp="s-karussell">'+
+   '<div class="bstitel">Ein paar Fragen zum Reinklicken</div>'+
+   '<div class="karussell"><div class="karussell-track" id="ktrack">'+chips+dup+
+   '</div></div></div>';}
+function karussellSpeed(){
+  var tr=document.getElementById('ktrack');
+  if(!tr)return;
+  var w=tr.scrollWidth/2, pxs=32;
+  tr.style.animationDuration=Math.max(20,Math.round(w/pxs))+'s';}
 function methodikBox(){
   return '<details class="info sp" id="s-methodik" data-sp="s-methodik"><summary><h3>'+
    'Wie diese Übersicht entstanden ist</h3><span class="mhint">— kurz: alle sieben Programme '+
@@ -367,7 +390,7 @@ function vStart(){
    'placeholder="Direkt eine Frage suchen … z. B. Mietendeckel, Tempelhofer Feld, Kita-Plätze" '+
    'value="'+esc(qv)+'" oninput="suchSync(this.value)" '+
    'aria-label="In allen Fragen und Antworten suchen">';
-  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Vier Einstiege</h3>';
+  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Wo möchtest du anfangen?</h3>';
   h+='<div class="ways">'+
    '<button class="way" onclick="go(\'themen\')">'+ico('themen')+'<b>Nach Thema stöbern</b>'+
    '<span>'+M.ut+' Fragen in neun Themengruppen, mit den Antworten aller sieben Programme '+
@@ -382,6 +405,17 @@ function vStart(){
    '<span>Positionen zustimmen und sehen, wie sich die Zustimmung über die Themen '+
    'verteilt.</span></button>'+
    '</div>';
+  h+='<h3 id="s-gruppen" class="sp" data-sp="s-gruppen">Direkt zu einem Thema springen</h3><div class="grid">';
+  D.gruppen.forEach(function(g){
+    var n=0,k=0;g.tf.forEach(function(t){n+=t.fragen.length;
+      t.fragen.forEach(function(q){if(q._kern)k++})});
+    h+='<button class="gcard" onclick="jumpTf(\''+g.tf[0].c+'\')"><b>'+esc(g.n)+'</b>'+
+       '<span>'+n+' Fragen · '+k+' Kernfragen</span></button>';});
+  h+='</div>';
+  h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
+   'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
+   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
+  h+=karussellTeaser();
   h+='<div id="s-beispiel" class="sp" data-sp="s-beispiel">'+beispielTeaser()+'</div>';
   h+='<div id="s-streit" class="sp" data-sp="s-streit">'+streitTeaser()+'</div>';
   h+='<details class="info sp" id="s-wege" data-sp="s-wege"><summary><h3>So kommst du durch die '+
@@ -407,16 +441,6 @@ function vStart(){
   h+='<div class="wege">'+wege.map(function(w){
     return '<p><button class="lnk" onclick="go(\''+w[0]+'\')">'+esc(w[1])+
       '</button> — '+w[2]+'</p>'}).join('')+'</div></details>';
-  h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
-   'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
-   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
-  h+='<h3 id="s-gruppen" class="sp" data-sp="s-gruppen">Die neun Themengruppen</h3><div class="grid">';
-  D.gruppen.forEach(function(g){
-    var n=0,k=0;g.tf.forEach(function(t){n+=t.fragen.length;
-      t.fragen.forEach(function(q){if(q._kern)k++})});
-    h+='<button class="gcard" onclick="jumpTf(\''+g.tf[0].c+'\')"><b>'+esc(g.n)+'</b>'+
-       '<span>'+n+' Fragen · '+k+' Kernfragen</span></button>';});
-  h+='</div>';
   h+=methodikBox();
   return h;}
 /* ---------- Methodik: steht am Fuß der Startseite ----------
@@ -525,9 +549,11 @@ function zurMethodik(){
   if(CUR!=='start'){go('start');setTimeout(function(){scrollTo2('s-methodik')},80);}
   else scrollTo2('s-methodik');}
 function sbStart(){
-  var a=[['s-intro','Worum es geht'],['s-einstieg','Vier Einstiege'],
+  var a=[['s-intro','Worum es geht'],['s-einstieg','Wo möchtest du anfangen?'],
+         ['s-gruppen','Direkt zu einem Thema springen'],
+         ['s-karussell','Ein paar Fragen zum Reinklicken'],
          ['s-beispiel','Beispiel aus den Programmen'],['s-streit','Wo wird gestritten'],
-         ['s-wege','So kommst du durch die Seite'],['s-gruppen','Die neun Themengruppen'],
+         ['s-wege','So kommst du durch die Seite'],
          ['s-methodik','Wie das entstanden ist']];
   return '<h4>Startseite</h4>'+a.map(function(x){
     return '<a href="#'+x[0]+'" class="sp-'+x[0]+'" onclick="scrollTo2(\''+x[0]+
@@ -547,7 +573,7 @@ function vThemen(){
     var n=0;g.tf.forEach(function(t){n+=t.fragen.filter(passt).length});
     if(!n)return;
     var offen=g.tf.some(function(t){return t.c===TFC});
-    var voll=offen||GRP===g.c||GRPOPEN[g.c];
+    var voll=offen||GRP===g.c||(GRPOPEN[g.c]&&!GRPCLOSED[g.c]);
     h+='<details class="grp"'+(voll?' open':'')+' data-g="'+g.c+'"><summary>'+esc(g.n)+
       '<span class="cnt">'+n+' '+(n===1?'Frage':'Fragen')+'</span></summary>'+
       (voll?'<div class="tf">'+gruppeTf(g)+'</div>':'<div class="tf" data-lazy-g="'+g.c+'"></div>')+
@@ -566,14 +592,14 @@ function gruppeTf(g){
 function lazyGruppenBinden(){
   document.querySelectorAll('#shell details.grp[data-g]').forEach(function(d){
     var gc=d.dataset.g;
-    if(GRPOPEN[gc])return;
-    d.addEventListener('toggle',function bind(){
-      if(!d.open)return;
-      GRPOPEN[gc]=true;
+    if(d.dataset.lazyBound)return;
+    d.dataset.lazyBound='1';
+    d.addEventListener('toggle',function(){
+      if(!d.open){GRPCLOSED[gc]=true;return;}
+      GRPOPEN[gc]=true;delete GRPCLOSED[gc];
       var tf=d.querySelector('.tf[data-lazy-g]');
       if(tf){var g=BYGRP[gc];if(g){tf.innerHTML=gruppeTf(g);}tf.removeAttribute('data-lazy-g');}
-      window.requestAnimationFrame(spyRun);
-      d.removeEventListener('toggle',bind);});});}
+      window.requestAnimationFrame(spyRun);});});}
 function streitFragen(){return ALL.filter(function(q){return q.art==='gegenlaeufig'});}
 function vStreit(){
   NOPARF=true;
@@ -933,6 +959,7 @@ function render(){
   offeneSetzen(vor);
   lazyGruppenBinden();
   spyRun();
+  karussellSpeed();
   updMk();}
 /* ---------- Mitlaufende Markierung in der Seitenleiste ----------
    Gedrosselte Auswertung beim Scrollen statt eines IntersectionObservers: der Observer meldet
@@ -943,10 +970,28 @@ var FT=document.getElementById('ft');
 var SPYT=false;
 function spyRun(){
   SPYT=false;
-  var ziele=document.querySelectorAll('#view .sp[data-sp]');
-  if(!ziele.length)return;
   var grenze=(parseInt(getComputedStyle(document.documentElement)
     .getPropertyValue('--navh'))||58)+16;
+  var scope=document;
+  var grps=document.querySelectorAll('#view details.grp[data-g]');
+  if(grps.length){
+    var gakt=null,gbest=null,gi,gel,gt;
+    for(gi=0;gi<grps.length;gi++){
+      gel=grps[gi];
+      if(!gel.offsetParent)continue;
+      gt=gel.getBoundingClientRect().top;
+      if(gt<=grenze&&(gbest===null||gt>gbest)){gbest=gt;gakt=gel}
+    }
+    if(!gakt){
+      for(gi=0;gi<grps.length;gi++){
+        gel=grps[gi];
+        if(gel.offsetParent&&gel.getBoundingClientRect().bottom>grenze){gakt=gel;break}
+      }
+    }
+    if(gakt)scope=gakt;
+  }
+  var ziele=scope.querySelectorAll('.sp[data-sp]');
+  if(!ziele.length)return;
   var akt=null,best=null,i,el,t;
   for(i=0;i<ziele.length;i++){
     el=ziele[i];
