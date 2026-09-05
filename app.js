@@ -237,6 +237,7 @@ function ico(n){var d={
   'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+d[n]+'</svg></span>';}
 function go(v,arg){CUR=v;NEU=true;
   if(v==='themen'&&arg){TFC=arg;GRP=BYTF[arg]?BYTF[arg]._gc:GRP}
+  if(v==='partei'&&arg){PA=arg;PB=null;PSUB='profil'}
   window.scrollTo(0,0);render();
   document.querySelectorAll('nav button[data-v]').forEach(function(b){b.className=b.dataset.v===v?'on':''});}
 function jumpTf(tf){TFC=tf;GRP=BYTF[tf]._gc;CUR='themen';NEU=true;render();
@@ -341,21 +342,22 @@ function streitTeaser(){
    'onclick="go(\'streit\')">Alle Streitfragen ansehen</button></p></div>';}
 function karussellWahl(){
   var pool=ALL.filter(function(q){return q._kern});
-  var pick=[],used={},n=Math.min(14,pool.length);
+  var pick=[],used={},n=Math.min(10,pool.length);
   while(pick.length<n){
     var q=pool[Math.floor(Math.random()*pool.length)];
     if(used[q.c])continue;used[q.c]=true;pick.push(q);}
   return pick;}
+function karussellKarte(q,hidden){
+  return '<button class="fragchip"'+(hidden?' tabindex="-1" aria-hidden="true"':'')+
+    ' onclick="jump(\''+q.c+'\')"><span class="qf">'+esc(q.f)+'</span>'+
+    '<div class="chips">'+chips(q,sichtbareParteien())+'</div></button>';}
 function karussellTeaser(){
   if(!KARUSSELL)KARUSSELL=karussellWahl();
-  var chips=KARUSSELL.map(function(q){
-    return '<button class="fragchip" onclick="jump(\''+q.c+'\')">'+esc(q.f)+'</button>'}).join('');
-  var dup=KARUSSELL.map(function(q){
-    return '<button class="fragchip" tabindex="-1" aria-hidden="true" '+
-      'onclick="jump(\''+q.c+'\')">'+esc(q.f)+'</button>'}).join('');
+  var chipsHtml=KARUSSELL.map(function(q){return karussellKarte(q,false)}).join('');
+  var dup=KARUSSELL.map(function(q){return karussellKarte(q,true)}).join('');
   return '<div id="s-karussell" class="sp" data-sp="s-karussell">'+
    '<div class="bstitel">Ein paar Fragen zum Reinklicken</div>'+
-   '<div class="karussell"><div class="karussell-track" id="ktrack">'+chips+dup+
+   '<div class="karussell"><div class="karussell-track" id="ktrack">'+chipsHtml+dup+
    '</div></div></div>';}
 function karussellSpeed(){
   var tr=document.getElementById('ktrack');
@@ -371,6 +373,21 @@ function parteienListe(){
   var a=P.slice();
   if(a.length<2)return a.join('');
   return a.slice(0,-1).join(', ')+' und '+a[a.length-1];}
+function slug(s){return s.toLowerCase()
+  .replace(/ä/g,'ae').replace(/ö/g,'oe').replace(/ü/g,'ue').replace(/ß/g,'ss')
+  .replace(/[^a-z0-9]+/g,'');}
+function logoFehler(img){
+  var span=document.createElement('span');
+  span.className='pl-ini';
+  span.textContent=IN[img.alt]||img.alt;
+  img.replaceWith(span);}
+function parteiLogos(){
+  return '<div class="pl-cap">Die Wahlprogramme folgender Parteien wurden ausgewertet</div>'+
+   '<div class="pl-row">'+P.map(function(p){
+     return '<button class="pl-item" onclick="go(\'partei\',\''+p.replace(/'/g,"\\'")+'\')"><span class="pl-badge" style="border-bottom-color:'+PC[p]+
+       ';background:'+PC[p]+'1A"><img src="logos/'+slug(p)+'.webp" alt="'+esc(p)+'" '+
+       'onerror="logoFehler(this)"></span><span class="pl-name">'+esc(p)+'</span></button>';
+   }).join('')+'</div>';}
 function vStart(){
   var M=D.meta;
   var tfz=0;D.gruppen.forEach(function(g){tfz+=g.tf.length});
@@ -380,17 +397,17 @@ function vStart(){
   h+='<p class="lead gross">Am 20. September 2026 wird das Berliner Abgeordnetenhaus gewählt. '+
    'Hier kannst du die Positionen und Inhalte der Wahlprogramme der beliebtesten Parteien anhand '+
    'von '+M.ut+' Fragen entlang von '+tfz+' Themenfeldern auswerten und vergleichen. Jede '+
-   'Position ist wörtlich zitiert und mit Seitenangabe zum originalen Wahlprogramm versehen. '+
-   'Diese Auswertung bezieht sich ausschließlich auf diese sieben Wahlprogramme. Sie beinhaltet '+
-   'keine Bewertung oder Empfehlung.</p>';
-  h+='<p class="lead">Die Wahlprogramme folgender Parteien wurden ausgewertet: '+
-   esc(P.join(', '))+'</p>';
+   'Position ist wörtlich zitiert und mit Seitenangabe zum originalen Wahlprogramm versehen.</p>';
+  h+=parteiLogos();
+  h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
+   'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
+   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
+  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Wo möchtest du anfangen?</h3>';
   var qv=document.getElementById('q')?document.getElementById('q').value:'';
   h+='<input id="q2" class="qbig" type="search" '+
    'placeholder="Direkt eine Frage suchen … z. B. Mietendeckel, Tempelhofer Feld, Kita-Plätze" '+
    'value="'+esc(qv)+'" oninput="suchSync(this.value)" '+
    'aria-label="In allen Fragen und Antworten suchen">';
-  h+='<h3 id="s-einstieg" class="sp" data-sp="s-einstieg">Wo möchtest du anfangen?</h3>';
   h+='<div class="ways">'+
    '<button class="way" onclick="go(\'themen\')">'+ico('themen')+'<b>Nach Thema stöbern</b>'+
    '<span>'+M.ut+' Fragen in neun Themengruppen, mit den Antworten aller sieben Programme '+
@@ -412,9 +429,6 @@ function vStart(){
     h+='<button class="gcard" onclick="jumpTf(\''+g.tf[0].c+'\')"><b>'+esc(g.n)+'</b>'+
        '<span>'+n+' Fragen · '+k+' Kernfragen</span></button>';});
   h+='</div>';
-  h+='<p class="lead gross">Hier wird keine Empfehlung ausgesprochen. Diese Auswertung bewertet '+
-   'nicht, stuft nicht ein und sagt nichts darüber, ob ein Vorhaben bezahlbar, rechtlich möglich '+
-   'oder überhaupt Sache des Landes Berlin ist. Sie zeigt, was in den Programmen steht.</p>';
   h+=karussellTeaser();
   h+='<div id="s-beispiel" class="sp" data-sp="s-beispiel">'+beispielTeaser()+'</div>';
   h+='<div id="s-streit" class="sp" data-sp="s-streit">'+streitTeaser()+'</div>';
