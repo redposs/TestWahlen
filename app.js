@@ -12,7 +12,7 @@ function parteienNachSort(){
   return D.parteien.slice().sort(function(a,b){return a.localeCompare(b,'de')});}
 function setPSort(m){PSORT=m;save('wp26_psort',m);render();}
 function psortBtn(){
-  return '<div class="sortb" style="margin-left:0">Reihenfolge: '+
+  return '<div class="sortb" style="margin-left:0"><span class="fl">Reihenfolge</span>'+
     [['az','A–Z'],['spektrum','Spektrum']].map(function(x){
       return '<button class="'+(PSORT===x[0]?'on':'')+'" onclick="setPSort(\''+x[0]+'\')"'+
         (x[0]==='spektrum'?' title="Grobe Einordnung von links nach rechts \u2014 eigene Einschätzung, kein Anspruch auf Objektivität"':'')+
@@ -20,7 +20,7 @@ function psortBtn(){
 var BALKEN=load('wp26_balken','farbe'); // 'farbe' oder 'kontrast'
 function setBalken(m){BALKEN=m;save('wp26_balken',m);render();}
 function balkenBtn(){
-  return '<div class="sortb" style="margin:8px 0 2px">Darstellung: '+
+  return '<div class="sortb" style="margin:8px 0 2px"><span class="fl">Darstellung</span>'+
     [['farbe','Farben'],['kontrast','Hoher Kontrast']].map(function(x){
       return '<button class="'+(BALKEN===x[0]?'on':'')+'" onclick="setBalken(\''+x[0]+'\')">'+x[1]+'</button>'}).join('')+'</div>';}
 var SL={K:'Klare Forderung',A:'Lehnt ab',T:'Teils dafür, teils dagegen',Z:'Absichtserklärung'};
@@ -155,7 +155,7 @@ function chart(title,sub,rows,opt){
   opt=opt||{};
   var two=opt.two, names=opt.names||[], col=opt.col||['var(--c1)','var(--c2)'];
   var kontrast=BALKEN==='kontrast';
-  if(kontrast)col=two?['#14161A','repeating-linear-gradient(135deg,#14161A,#14161A 5px,#fff 5px,#fff 10px)']:['#14161A'];
+  if(kontrast)col=two?['#0072B2','#E69F00']:['#0072B2'];
   var eh=opt.einheit===undefined?' %':opt.einheit;
   var mx=Math.max.apply(null,rows.map(function(r){return two?Math.max(r.a,r.b):r.a}))||1;
   var nk=opt.nk===undefined?1:opt.nk;
@@ -213,16 +213,16 @@ function sichtbareParteien(){
   if(NOPARF)return P;
   return FPAR.length?P.filter(function(p){return FPAR.indexOf(p)>=0}):P;}
 function filterleiste(n,ges,ohneParteien){
-  var h='<div class="filt"><span class="fl">Filter</span>'+
+  var h='<div class="filt"><div class="fgrp"><span class="fl">Filter</span>'+
    '<button class="'+(FKERN?'on':'')+'" onclick="fKern()" '+
-   'title="Nur Fragen zeigen, zu denen sich mindestens fünf Parteien äußern">Nur Kernfragen</button>';
+   'title="Nur Fragen zeigen, zu denen sich mindestens fünf Parteien äußern">Nur Kernfragen</button></div>';
   if(!ohneParteien){
-    h+='<span class="sep"></span><span class="fl">Partei</span>';
+    h+='<span class="sep"></span><div class="fgrp"><span class="fl">Partei</span>';
     P.forEach(function(p){
       h+='<button class="'+(FPAR.indexOf(p)>=0?'on':'')+'" onclick="fPartei(\''+p.replace(/'/g,"\\'")+'\')" '+
         'title="Antworten von '+esc(p)+' ein- oder ausblenden">'+esc(p)+'</button>';});
-    h+='<button onclick="fAlle()" title="Alle Filter zurücksetzen">Alle anzeigen</button>';}
-  if(!ohneParteien)h+=psortBtn();
+    h+='<button onclick="fAlle()" title="Alle Filter zurücksetzen">Alle anzeigen</button></div>';}
+  if(!ohneParteien)h+='<span class="sep"></span><div class="fgrp">'+psortBtn()+'</div>';
   var sp=sichtbareParteien().length;
   h+='<span class="fcount">'+(n===ges?ges+' Fragen':n+' von '+ges+' Fragen')+
     (!ohneParteien&&sp<P.length?' · '+sp+' von '+P.length+' Parteien':'')+'</span></div>';
